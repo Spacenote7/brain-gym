@@ -18,6 +18,7 @@
   --good:#3ddc84; --bad:#ff5a5a;
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+button{touch-action:manipulation}
 html,body{height:100%}
 body{
   background:var(--bg); color:var(--text);
@@ -471,6 +472,7 @@ function nbStep() {
   if (nb.i >= nb.seq.length) { nbEnd(); return; }
   $('#nb-hud').textContent = `${nb.i + 1} / ${nb.seq.length}`;
   nb.responded = false;
+  nb.t0 = performance.now();
   const cell = $(`.nb-cell[data-i="${nb.seq[nb.i]}"]`);
   cell.classList.add('lit');
   nb.timers.push(setTimeout(() => cell.classList.remove('lit'), 650));
@@ -478,6 +480,8 @@ function nbStep() {
 }
 $('#nb-match').addEventListener('click', () => {
   if (!nb || nb.i < nb.n || nb.responded) return;
+  // 前の刺激への遅延タップを新しい刺激への誤答にしない
+  if (performance.now() - nb.t0 < 150) return;
   nb.responded = true;
   const isMatch = nb.seq[nb.i] === nb.seq[nb.i - nb.n];
   if (isMatch) nb.hits++; else nb.fa++;
@@ -534,12 +538,14 @@ function stNext() {
 $('#st-btns').addEventListener('click', e => {
   const b = e.target.closest('.stroop-btn');
   if (!b || !st || st.busy) return;
+  // iOSの遅延クリックが次の問題を誤答として食うのを防ぐ（人間のストループ反応は350ms以上）
+  if (performance.now() - st.t0 < 250) return;
   st.busy = true;
+  st.i++;
+  setTimeout(stNext, 260); // 先に次問への遷移を確定させる（途中で何が起きても止まらない）
   const ok = +b.dataset.i === st.ink;
   if (ok) { st.correct++; st.times.push(performance.now() - st.t0); }
   flashStage('#st-stage', ok);
-  st.i++;
-  setTimeout(stNext, 260);
 });
 function stEnd() {
   const { correct, total, times } = st;
