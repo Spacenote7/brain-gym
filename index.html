@@ -121,11 +121,12 @@ body{
 
 /* ---------- Stroop ---------- */
 .stroop-word{font-size:56px;font-weight:900;letter-spacing:.05em;min-height:80px;display:flex;align-items:center}
-.stroop-feedback{font-size:13px;color:var(--bad);min-height:20px;font-weight:700}
-.stroop-btns{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;margin-top:8px}
+.stroop-feedback{font-size:14px;color:var(--text);min-height:22px;font-weight:700;text-align:center;line-height:1.5}
+.stroop-feedback small{color:var(--muted);font-weight:400}
+.stroop-btns{display:grid;grid-template-columns:1fr 1fr;gap:16px;width:100%;margin-top:8px}
 .stroop-btn{
-  height:64px;border:none;border-radius:14px;cursor:pointer;
-  font-size:19px;font-weight:800;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.6);
+  height:74px;border:none;border-radius:14px;cursor:pointer;
+  font-size:20px;font-weight:800;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.6);
 }
 .stroop-btn:active{filter:brightness(1.3)}
 
@@ -708,7 +709,7 @@ function nbStep() {
   nb.timers.push(setTimeout(() => cell.classList.remove('lit'), 650));
   nb.timers.push(setTimeout(nbStep, nb.speed));
 }
-$('#nb-match').addEventListener('click', () => {
+$('#nb-match').addEventListener('pointerdown', () => {
   if (!nb || nb.i < nb.n || nb.responded) return;
   // 前の刺激への遅延タップを新しい刺激への誤答にしない
   if (performance.now() - nb.t0 < 150) return;
@@ -767,24 +768,30 @@ function stNext() {
   const el = $('#st-word');
   el.textContent = ST_COLORS[word].name;
   el.style.color = ST_COLORS[st.ink].c;
+  $('#st-feedback').textContent = '';
   st.busy = false;
   st.t0 = performance.now();
 }
-$('#st-btns').addEventListener('click', e => {
+// clickでなくpointerdownで判定する:
+// iOSのclick合成(タップ位置の補正・遅延・ゴースト)を経由せず、指が触れた瞬間の生の座標で確定する
+$('#st-btns').addEventListener('pointerdown', e => {
   const b = e.target.closest('.stroop-btn');
   if (!b || !st || st.busy) return;
-  // iOSの遅延クリックが次の問題を誤答として食うのを防ぐ（人間のストループ反応は350ms以上）
-  if (performance.now() - st.t0 < 250) return;
+  const rt = performance.now() - st.t0;
+  if (rt < 150) return; // 人間の視覚反応の下限より速いタップは前問の名残とみなす
   st.busy = true;
   st.i++;
-  setTimeout(stNext, 260); // 先に次問への遷移を確定させる（途中で何が起きても止まらない）
   const ok = +b.dataset.i === st.ink;
-  if (ok) { st.correct++; st.times.push(performance.now() - st.t0); }
+  setTimeout(stNext, ok ? 260 : 1000); // 誤答時は1秒止めて「何が起きたか」を見せる
+  if (ok) { st.correct++; st.times.push(rt); }
   else {
-    // 診断: アプリが何をどう判定したかを本人に見せる（実機バグの切り分け用）
-    const pressed = ST_COLORS[+b.dataset.i].name, ans = ST_COLORS[st.ink].name;
-    st.misses.push(`${st.i}問目:「${ST_COLORS[st.word].name}」の文字色=${ans} ／ ${pressed}を押した判定`);
-    $('#st-feedback').textContent = `判定: ${pressed} ／ 正解: ${ans}`;
+    // 診断: アプリが何をどう判定したかを本人に見せる（実機バグ/ストループ効果の切り分け用）
+    const pi = +b.dataset.i;
+    st.misses.push(`${st.i}問目: 文字色=${ST_COLORS[st.ink].name} ／ ${ST_COLORS[pi].name}を押下 (${Math.round(rt)}ms)`);
+    $('#st-feedback').innerHTML =
+      `文字の色は <b style="color:${ST_COLORS[st.ink].c}">${ST_COLORS[st.ink].name}</b>` +
+      ` ／ 押したのは <b style="color:${ST_COLORS[pi].c}">${ST_COLORS[pi].name}</b>` +
+      ` <small>(反応 ${Math.round(rt)}ms)</small>`;
   }
   flashStage('#st-stage', ok);
 });
@@ -1163,7 +1170,7 @@ function renderRecords() {
 }
 
 /* ---------- init ---------- */
-$('#version-label').textContent = 'Brain Gym v4';
+$('#version-label').textContent = 'Brain Gym v5';
 renderHome();
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   navigator.serviceWorker.register('sw.js').catch(() => {});
