@@ -103,9 +103,14 @@ body{
 
 /* ---------- Stroop ---------- */
 .stroop-word{font-size:56px;font-weight:900;letter-spacing:.05em;min-height:80px;display:flex;align-items:center}
+.stroop-feedback{font-size:13px;color:var(--bad);min-height:20px;font-weight:700}
 .stroop-btns{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;margin-top:8px}
-.stroop-btn{height:64px;border:none;border-radius:14px;cursor:pointer;font-size:0}
+.stroop-btn{
+  height:64px;border:none;border-radius:14px;cursor:pointer;
+  font-size:19px;font-weight:800;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.6);
+}
 .stroop-btn:active{filter:brightness(1.3)}
+.version{text-align:center;color:var(--muted);font-size:11px;margin-top:14px;opacity:.7}
 
 /* ---------- Calc / Span keypad ---------- */
 .q-display{font-size:42px;font-weight:800;font-variant-numeric:tabular-nums;min-height:60px}
@@ -205,6 +210,7 @@ body{
   <div class="link-row">
     <button class="btn-ghost" id="btn-records">📈 記録を見る</button>
   </div>
+  <div class="version" id="version-label"></div>
 </div>
 
 <!-- ============ N-BACK ============ -->
@@ -245,6 +251,7 @@ body{
     </div>
     <div id="st-play" style="display:none;flex-direction:column;align-items:center;width:100%">
       <div class="stroop-word" id="st-word"></div>
+      <div class="stroop-feedback" id="st-feedback"></div>
       <div class="stroop-btns" id="st-btns"></div>
     </div>
   </div>
@@ -511,12 +518,13 @@ ST_COLORS.forEach((col, idx) => {
   b.className = 'stroop-btn';
   b.style.background = col.c;
   b.dataset.i = idx;
-  b.setAttribute('aria-label', col.name);
+  b.textContent = col.name; // 色名ラベル: 色味の見え方に依存させない
   $('#st-btns').appendChild(b);
 });
 let st = null;
 $('#st-start').addEventListener('click', () => {
-  st = { i: 0, total: 20, correct: 0, times: [], t0: 0, ink: -1, busy: false };
+  st = { i: 0, total: 20, correct: 0, times: [], t0: 0, ink: -1, word: -1, busy: false, misses: [] };
+  $('#st-feedback').textContent = '';
   $('#st-setup').style.display = 'none';
   $('#st-play').style.display = 'flex';
   cancelGame = () => { st = null; };
@@ -529,6 +537,7 @@ function stNext() {
   st.ink = rnd(0, 3);
   let word = st.ink;
   if (Math.random() < 0.75) { do { word = rnd(0, 3); } while (word === st.ink); }
+  st.word = word;
   const el = $('#st-word');
   el.textContent = ST_COLORS[word].name;
   el.style.color = ST_COLORS[st.ink].c;
@@ -545,18 +554,27 @@ $('#st-btns').addEventListener('click', e => {
   setTimeout(stNext, 260); // 先に次問への遷移を確定させる（途中で何が起きても止まらない）
   const ok = +b.dataset.i === st.ink;
   if (ok) { st.correct++; st.times.push(performance.now() - st.t0); }
+  else {
+    // 診断: アプリが何をどう判定したかを本人に見せる（実機バグの切り分け用）
+    const pressed = ST_COLORS[+b.dataset.i].name, ans = ST_COLORS[st.ink].name;
+    st.misses.push(`${st.i}問目:「${ST_COLORS[st.word].name}」の文字色=${ans} ／ ${pressed}を押した判定`);
+    $('#st-feedback').textContent = `判定: ${pressed} ／ 正解: ${ans}`;
+  }
   flashStage('#st-stage', ok);
 });
 function stEnd() {
-  const { correct, total, times } = st;
+  const { correct, total, times, misses } = st;
   st = null; cancelGame = null;
   const avg = times.length ? Math.round(times.reduce((a, b) => a + b) / times.length) : 0;
   // スコア: 正答率ベース + 速さボーナス（平均1500ms以下で加点、最大20点）
   const speedBonus = times.length ? Math.max(0, Math.min(20, Math.round((1500 - avg) / 50))) : 0;
   const score = Math.round(80 * correct / total) + speedBonus;
   record('stroop', score);
+  const missText = misses.length
+    ? '\n― 誤答の内訳 ―\n' + misses.slice(0, 5).join('\n') + (misses.length > 5 ? `\n…他${misses.length - 5}件` : '')
+    : '';
   showResult('stroop', `${score} 点`,
-    `正解 ${correct}/${total} ・ 平均反応 ${avg}ms\nベスト: ${bestOf('stroop')}点`);
+    `正解 ${correct}/${total} ・ 平均反応 ${avg}ms\nベスト: ${bestOf('stroop')}点${missText}`);
 }
 
 /* ---------- keypad builder (calc / span 共用) ---------- */
@@ -733,6 +751,7 @@ function renderRecords() {
 }
 
 /* ---------- init ---------- */
+$('#version-label').textContent = 'Brain Gym v3';
 renderHome();
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   navigator.serviceWorker.register('sw.js').catch(() => {});

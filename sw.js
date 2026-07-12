@@ -1,5 +1,5 @@
 // Brain Gym service worker — オフラインでも動くようキャッシュ優先
-const CACHE = 'brain-gym-v2';
+const CACHE = 'brain-gym-v3';
 const ASSETS = ['./', './index.html', './manifest.json', './icon-180.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
