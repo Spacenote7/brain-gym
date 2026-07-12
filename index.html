@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<title>Brain Gym — 前頭葉ジム</title>
+<meta name="theme-color" content="#0b0f16">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Brain Gym">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<style>
+:root{
+  --bg:#0b0f16; --surface:#131a28; --surface2:#1b2436;
+  --navy:#2f5d8f; --accent:#5b9bd5; --accent2:#8fc1ee;
+  --text:#f2f5f9; --muted:#8a94a6; --line:#243247;
+  --good:#3ddc84; --bad:#ff5a5a;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  background:var(--bg); color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;
+  overscroll-behavior:none; user-select:none; -webkit-user-select:none;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+.screen{display:none;max-width:480px;margin:0 auto;padding:20px 18px 32px;min-height:100vh}
+.screen.active{display:block}
+
+/* ---------- Home ---------- */
+.app-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
+.app-title{font-size:22px;font-weight:800;letter-spacing:.02em}
+.app-title span{color:var(--accent)}
+.date-label{color:var(--muted);font-size:13px}
+.streak{
+  background:linear-gradient(135deg,var(--surface),var(--surface2));
+  border:1px solid var(--line);border-radius:14px;
+  padding:14px 16px;margin:16px 0 20px;
+  display:flex;justify-content:space-between;align-items:center;
+}
+.streak b{font-size:26px;color:var(--accent2)}
+.streak small{color:var(--muted);font-size:12px}
+.game-card{
+  width:100%;text-align:left;
+  background:var(--surface);border:1px solid var(--line);border-radius:14px;
+  padding:16px;margin-bottom:12px;color:var(--text);
+  display:flex;align-items:center;gap:14px;cursor:pointer;
+  transition:transform .05s;
+}
+.game-card:active{transform:scale(.98)}
+.game-icon{
+  width:46px;height:46px;border-radius:12px;flex-shrink:0;
+  background:var(--navy);display:flex;align-items:center;justify-content:center;
+  font-size:22px;font-weight:800;color:#fff;
+}
+.game-info{flex:1}
+.game-name{font-size:16px;font-weight:700}
+.game-desc{font-size:12px;color:var(--muted);margin-top:2px}
+.game-stat{text-align:right;font-size:12px;color:var(--muted);line-height:1.5}
+.game-stat .done{color:var(--good);font-weight:700}
+.link-row{display:flex;gap:10px;margin-top:18px}
+.btn-ghost{
+  flex:1;background:none;border:1px solid var(--line);border-radius:12px;
+  color:var(--muted);padding:12px;font-size:14px;cursor:pointer;
+}
+
+/* ---------- Game common ---------- */
+.game-header{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.btn-back{
+  background:var(--surface);border:1px solid var(--line);border-radius:10px;
+  color:var(--text);width:40px;height:40px;font-size:18px;cursor:pointer;
+}
+.game-header h2{font-size:18px;flex:1}
+.hud{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.stage{
+  background:var(--surface);border:1px solid var(--line);border-radius:16px;
+  min-height:300px;padding:20px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;
+}
+.big-btn{
+  width:100%;padding:16px;border:none;border-radius:14px;
+  background:var(--navy);color:#fff;font-size:17px;font-weight:700;cursor:pointer;
+}
+.big-btn:active{background:var(--accent)}
+.big-btn[disabled]{opacity:.35}
+.sub-note{font-size:13px;color:var(--muted);text-align:center;line-height:1.7}
+.seg{display:flex;background:var(--surface2);border-radius:10px;padding:3px;gap:3px}
+.seg button{
+  border:none;background:none;color:var(--muted);padding:8px 16px;
+  border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;
+}
+.seg button.on{background:var(--navy);color:#fff}
+
+/* ---------- N-back ---------- */
+.nb-grid{display:grid;grid-template-columns:repeat(3,72px);gap:8px}
+.nb-cell{width:72px;height:72px;border-radius:12px;background:var(--surface2);border:1px solid var(--line)}
+.nb-cell.lit{background:var(--accent);border-color:var(--accent2)}
+#nb-match{margin-top:16px}
+.flash-good{box-shadow:0 0 0 3px var(--good) inset;border-radius:16px}
+.flash-bad{box-shadow:0 0 0 3px var(--bad) inset;border-radius:16px}
+
+/* ---------- Stroop ---------- */
+.stroop-word{font-size:56px;font-weight:900;letter-spacing:.05em;min-height:80px;display:flex;align-items:center}
+.stroop-btns{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;margin-top:8px}
+.stroop-btn{height:64px;border:none;border-radius:14px;cursor:pointer;font-size:0}
+.stroop-btn:active{filter:brightness(1.3)}
+
+/* ---------- Calc / Span keypad ---------- */
+.q-display{font-size:42px;font-weight:800;font-variant-numeric:tabular-nums;min-height:60px}
+.answer-display{
+  font-size:32px;font-weight:700;min-height:48px;letter-spacing:.15em;
+  color:var(--accent2);font-variant-numeric:tabular-nums;
+  border-bottom:2px solid var(--line);min-width:140px;text-align:center;
+}
+.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;max-width:300px}
+.key{
+  height:58px;border:1px solid var(--line);border-radius:12px;
+  background:var(--surface2);color:var(--text);font-size:22px;font-weight:700;cursor:pointer;
+}
+.key:active{background:var(--navy)}
+.key.action{background:var(--navy);border-color:var(--navy)}
+.span-digit{font-size:88px;font-weight:900;color:var(--accent2);font-variant-numeric:tabular-nums}
+
+/* ---------- Result overlay ---------- */
+#overlay{
+  position:fixed;inset:0;background:rgba(5,8,13,.86);display:none;
+  align-items:center;justify-content:center;z-index:50;padding:24px;
+}
+#overlay.active{display:flex}
+.result-card{
+  background:var(--surface);border:1px solid var(--line);border-radius:20px;
+  padding:28px 24px;width:100%;max-width:360px;text-align:center;
+}
+.result-card h3{font-size:16px;color:var(--muted);font-weight:600}
+.result-score{font-size:52px;font-weight:900;color:var(--accent2);margin:10px 0 2px}
+.result-sub{font-size:14px;color:var(--muted);line-height:1.8;margin-bottom:20px;white-space:pre-line}
+.result-btns{display:flex;gap:10px}
+.result-btns .big-btn{font-size:15px;padding:14px}
+.result-btns .btn-ghost{padding:14px}
+
+/* ---------- Records ---------- */
+.rec-block{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px}
+.rec-title{display:flex;justify-content:space-between;font-size:14px;font-weight:700;margin-bottom:10px}
+.rec-title small{color:var(--muted);font-weight:400}
+.rec-chart{display:flex;align-items:flex-end;gap:5px;height:64px}
+.rec-bar{flex:1;background:var(--navy);border-radius:4px 4px 0 0;min-height:4px;position:relative}
+.rec-bar.last{background:var(--accent)}
+.rec-bar span{position:absolute;top:-16px;left:0;right:0;text-align:center;font-size:9px;color:var(--muted)}
+.rec-empty{color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+
+<!-- ============ HOME ============ -->
+<div class="screen active" id="scr-home">
+  <div class="app-header">
+    <div class="app-title">Brain <span>Gym</span></div>
+    <div class="date-label" id="home-date"></div>
+  </div>
+  <div class="date-label">前頭葉ジム — 1日4種目、10分で完了</div>
+
+  <div class="streak">
+    <div><small>連続トレーニング</small><br><b id="streak-days">0</b> 日</div>
+    <div style="text-align:right"><small>今日の完了</small><br><b id="today-count">0</b><small> / 4 種目</small></div>
+  </div>
+
+  <button class="game-card" data-game="nback">
+    <div class="game-icon">N</div>
+    <div class="game-info">
+      <div class="game-name">Nバック</div>
+      <div class="game-desc">ワーキングメモリ — N個前と同じ位置なら押す</div>
+    </div>
+    <div class="game-stat" id="stat-nback"></div>
+  </button>
+
+  <button class="game-card" data-game="stroop">
+    <div class="game-icon" style="color:#ffd34d">色</div>
+    <div class="game-info">
+      <div class="game-name">ストループ</div>
+      <div class="game-desc">抑制機能 — 文字の意味でなく「色」で答える</div>
+    </div>
+    <div class="game-stat" id="stat-stroop"></div>
+  </button>
+
+  <button class="game-card" data-game="calc">
+    <div class="game-icon">＋</div>
+    <div class="game-info">
+      <div class="game-name">計算スピード</div>
+      <div class="game-desc">処理速度 — 単純計算20問をどれだけ速く</div>
+    </div>
+    <div class="game-stat" id="stat-calc"></div>
+  </button>
+
+  <button class="game-card" data-game="span">
+    <div class="game-icon">7</div>
+    <div class="game-info">
+      <div class="game-name">数字スパン</div>
+      <div class="game-desc">記憶力 — 数字列を覚えて再生（逆唱あり）</div>
+    </div>
+    <div class="game-stat" id="stat-span"></div>
+  </button>
+
+  <div class="link-row">
+    <button class="btn-ghost" id="btn-records">📈 記録を見る</button>
+  </div>
+</div>
+
+<!-- ============ N-BACK ============ -->
+<div class="screen" id="scr-nback">
+  <div class="game-header">
+    <button class="btn-back" data-home>←</button>
+    <h2>Nバック</h2>
+    <div class="hud" id="nb-hud"></div>
+  </div>
+  <div class="stage" id="nb-stage">
+    <div id="nb-setup" style="display:flex;flex-direction:column;align-items:center;gap:18px">
+      <div class="seg" id="nb-level">
+        <button data-n="1">1バック</button>
+        <button data-n="2" class="on">2バック</button>
+        <button data-n="3">3バック</button>
+      </div>
+      <p class="sub-note">マスが光る位置を覚えて、<br><b>N個前と同じ位置</b>で光ったら「一致！」を押す。<br>全22回・約1分。</p>
+      <button class="big-btn" id="nb-start">スタート</button>
+    </div>
+    <div id="nb-play" style="display:none;flex-direction:column;align-items:center">
+      <div class="nb-grid" id="nb-grid"></div>
+      <button class="big-btn" id="nb-match">一致！</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ STROOP ============ -->
+<div class="screen" id="scr-stroop">
+  <div class="game-header">
+    <button class="btn-back" data-home>←</button>
+    <h2>ストループ</h2>
+    <div class="hud" id="st-hud"></div>
+  </div>
+  <div class="stage" id="st-stage">
+    <div id="st-setup" style="display:flex;flex-direction:column;align-items:center;gap:18px">
+      <p class="sub-note">文字の<b>意味は無視</b>して、<br>表示された<b>文字の色</b>のボタンを押す。<br>全20問、速さと正確さの勝負。</p>
+      <button class="big-btn" id="st-start">スタート</button>
+    </div>
+    <div id="st-play" style="display:none;flex-direction:column;align-items:center;width:100%">
+      <div class="stroop-word" id="st-word"></div>
+      <div class="stroop-btns" id="st-btns"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ CALC ============ -->
+<div class="screen" id="scr-calc">
+  <div class="game-header">
+    <button class="btn-back" data-home>←</button>
+    <h2>計算スピード</h2>
+    <div class="hud" id="ca-hud"></div>
+  </div>
+  <div class="stage" id="ca-stage">
+    <div id="ca-setup" style="display:flex;flex-direction:column;align-items:center;gap:18px">
+      <p class="sub-note">たし算・ひき算・かけ算 20問。<br>答えを入力して <b>OK</b>。速さ勝負。</p>
+      <button class="big-btn" id="ca-start">スタート</button>
+    </div>
+    <div id="ca-play" style="display:none;flex-direction:column;align-items:center;gap:14px;width:100%">
+      <div class="q-display" id="ca-q"></div>
+      <div class="answer-display" id="ca-ans">&nbsp;</div>
+      <div class="keypad" id="ca-pad"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ SPAN ============ -->
+<div class="screen" id="scr-span">
+  <div class="game-header">
+    <button class="btn-back" data-home>←</button>
+    <h2>数字スパン</h2>
+    <div class="hud" id="sp-hud"></div>
+  </div>
+  <div class="stage" id="sp-stage">
+    <div id="sp-setup" style="display:flex;flex-direction:column;align-items:center;gap:18px">
+      <div class="seg" id="sp-mode">
+        <button data-mode="fwd" class="on">順唱</button>
+        <button data-mode="rev">逆唱</button>
+      </div>
+      <p class="sub-note">1つずつ表示される数字を覚えて、<br>終わったら<b>同じ順（逆唱は逆順）</b>で入力。<br>成功するたび1桁ずつ長くなる。</p>
+      <button class="big-btn" id="sp-start">スタート</button>
+    </div>
+    <div id="sp-show" style="display:none;flex-direction:column;align-items:center">
+      <div class="span-digit" id="sp-digit"></div>
+    </div>
+    <div id="sp-entry" style="display:none;flex-direction:column;align-items:center;gap:14px;width:100%">
+      <div class="sub-note" id="sp-prompt"></div>
+      <div class="answer-display" id="sp-ans">&nbsp;</div>
+      <div class="keypad" id="sp-pad"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ RECORDS ============ -->
+<div class="screen" id="scr-records">
+  <div class="game-header">
+    <button class="btn-back" data-home>←</button>
+    <h2>記録</h2>
+  </div>
+  <div id="rec-list"></div>
+</div>
+
+<!-- ============ RESULT OVERLAY ============ -->
+<div id="overlay">
+  <div class="result-card">
+    <h3 id="res-title"></h3>
+    <div class="result-score" id="res-score"></div>
+    <div class="result-sub" id="res-sub"></div>
+    <div class="result-btns">
+      <button class="btn-ghost" data-home style="flex:1">ホーム</button>
+      <button class="big-btn" id="res-retry" style="flex:1">もう一回</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+/* ============================================================
+   Brain Gym — 前頭葉・ワーキングメモリ トレーニング PWA
+   ============================================================ */
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+const rnd = (min, max) => min + Math.floor(Math.random() * (max - min + 1));
+const todayStr = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+};
+
+/* ---------- storage ---------- */
+const GAMES = {
+  nback: { name: 'Nバック',       unit: '点',  betterHigh: true },
+  stroop:{ name: 'ストループ',     unit: '点',  betterHigh: true },
+  calc:  { name: '計算スピード',   unit: '秒',  betterHigh: false },
+  span:  { name: '数字スパン',     unit: '桁',  betterHigh: true },
+};
+const store = {
+  load() { try { return JSON.parse(localStorage.getItem('brainGym') || '{}'); } catch { return {}; } },
+  save(d) { localStorage.setItem('brainGym', JSON.stringify(d)); },
+};
+function record(game, score, label) {
+  const d = store.load();
+  d.history = d.history || {};
+  (d.history[game] = d.history[game] || []).push({ date: todayStr(), score, label });
+  store.save(d);
+}
+function historyOf(game) { return (store.load().history || {})[game] || []; }
+function bestOf(game) {
+  const h = historyOf(game);
+  if (!h.length) return null;
+  const vals = h.map(e => e.score);
+  return GAMES[game].betterHigh ? Math.max(...vals) : Math.min(...vals);
+}
+function playedToday(game) { return historyOf(game).some(e => e.date === todayStr()); }
+function streakDays() {
+  const dates = new Set();
+  Object.values(store.load().history || {}).forEach(h => h.forEach(e => dates.add(e.date)));
+  let n = 0;
+  const d = new Date();
+  if (!dates.has(todayStr())) d.setDate(d.getDate() - 1); // 今日未実施なら昨日から数える
+  for (;;) {
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    if (!dates.has(key)) break;
+    n++;
+    d.setDate(d.getDate() - 1);
+  }
+  return n;
+}
+
+/* ---------- navigation ---------- */
+let cancelGame = null; // 実行中ゲームの後始末
+function show(id) {
+  if (cancelGame) { cancelGame(); cancelGame = null; }
+  $('#overlay').classList.remove('active');
+  $$('.screen').forEach(s => s.classList.toggle('active', s.id === id));
+  if (id === 'scr-home') renderHome();
+  if (id === 'scr-records') renderRecords();
+}
+$$('[data-home]').forEach(b => b.addEventListener('click', () => show('scr-home')));
+$$('.game-card').forEach(c => c.addEventListener('click', () => openGame(c.dataset.game)));
+$('#btn-records').addEventListener('click', () => show('scr-records'));
+
+function openGame(game) {
+  show('scr-' + game);
+  // セットアップ画面に戻す
+  if (game === 'nback') { $('#nb-setup').style.display = 'flex'; $('#nb-play').style.display = 'none'; $('#nb-hud').textContent = ''; }
+  if (game === 'stroop'){ $('#st-setup').style.display = 'flex'; $('#st-play').style.display = 'none'; $('#st-hud').textContent = ''; }
+  if (game === 'calc')  { $('#ca-setup').style.display = 'flex'; $('#ca-play').style.display = 'none'; $('#ca-hud').textContent = ''; }
+  if (game === 'span')  { $('#sp-setup').style.display = 'flex'; $('#sp-show').style.display = 'none'; $('#sp-entry').style.display = 'none'; $('#sp-hud').textContent = ''; }
+}
+
+let lastGame = null;
+function showResult(game, scoreText, sub) {
+  lastGame = game;
+  $('#res-title').textContent = GAMES[game].name;
+  $('#res-score').textContent = scoreText;
+  $('#res-sub').textContent = sub;
+  $('#overlay').classList.add('active');
+}
+$('#res-retry').addEventListener('click', () => {
+  $('#overlay').classList.remove('active');
+  openGame(lastGame);
+});
+
+/* ---------- home render ---------- */
+function renderHome() {
+  const d = new Date();
+  $('#home-date').textContent = `${d.getMonth()+1}/${d.getDate()} (${'日月火水木金土'[d.getDay()]})`;
+  $('#streak-days').textContent = streakDays();
+  $('#today-count').textContent = Object.keys(GAMES).filter(playedToday).length;
+  for (const g of Object.keys(GAMES)) {
+    const best = bestOf(g);
+    const el = $('#stat-' + g);
+    el.innerHTML =
+      (playedToday(g) ? '<span class="done">✓ 今日済</span>' : '<span>未実施</span>') +
+      '<br>' + (best === null ? '—' : `ベスト ${best}${GAMES[g].unit}`);
+  }
+}
+
+/* ---------- flash feedback ---------- */
+function flashStage(stageSel, ok) {
+  const el = $(stageSel);
+  const cls = ok ? 'flash-good' : 'flash-bad';
+  el.classList.add(cls);
+  setTimeout(() => el.classList.remove(cls), 220);
+}
+
+/* ============================================================
+   1) N-BACK
+   ============================================================ */
+let nbN = 2;
+$('#nb-level').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  nbN = +b.dataset.n;
+  $$('#nb-level button').forEach(x => x.classList.toggle('on', x === b));
+});
+// grid cells
+for (let i = 0; i < 9; i++) {
+  const c = document.createElement('div');
+  c.className = 'nb-cell'; c.dataset.i = i;
+  $('#nb-grid').appendChild(c);
+}
+let nb = null;
+$('#nb-start').addEventListener('click', () => {
+  const n = nbN, len = 20 + n;
+  const seq = [];
+  for (let i = 0; i < len; i++) {
+    if (i >= n && Math.random() < 0.35) { seq.push(seq[i - n]); }
+    else {
+      let p;
+      do { p = rnd(0, 8); } while (i >= n && p === seq[i - n]);
+      seq.push(p);
+    }
+  }
+  nb = {
+    seq, n, i: -1, hits: 0, fa: 0, responded: false, timers: [],
+    targets: seq.filter((v, i) => i >= n && v === seq[i - n]).length,
+  };
+  $('#nb-setup').style.display = 'none';
+  $('#nb-play').style.display = 'flex';
+  cancelGame = () => { nb && nb.timers.forEach(clearTimeout); nb = null; };
+  nbStep();
+});
+function nbStep() {
+  if (!nb) return;
+  nb.i++;
+  if (nb.i >= nb.seq.length) { nbEnd(); return; }
+  $('#nb-hud').textContent = `${nb.i + 1} / ${nb.seq.length}`;
+  nb.responded = false;
+  const cell = $(`.nb-cell[data-i="${nb.seq[nb.i]}"]`);
+  cell.classList.add('lit');
+  nb.timers.push(setTimeout(() => cell.classList.remove('lit'), 650));
+  nb.timers.push(setTimeout(nbStep, 2100));
+}
+$('#nb-match').addEventListener('click', () => {
+  if (!nb || nb.i < nb.n || nb.responded) return;
+  nb.responded = true;
+  const isMatch = nb.seq[nb.i] === nb.seq[nb.i - nb.n];
+  if (isMatch) nb.hits++; else nb.fa++;
+  flashStage('#nb-stage', isMatch);
+});
+function nbEnd() {
+  const { hits, fa, targets, n } = nb;
+  nb.timers.forEach(clearTimeout);
+  nb = null; cancelGame = null;
+  const score = targets ? Math.max(0, Math.round(100 * (hits - fa * 0.5) / targets)) : 100;
+  record('nback', score, `${n}バック`);
+  showResult('nback', `${score} 点`,
+    `${n}バック: 的中 ${hits}/${targets} ・ お手つき ${fa}\nベスト: ${bestOf('nback')}点`);
+}
+
+/* ============================================================
+   2) STROOP
+   ============================================================ */
+const ST_COLORS = [
+  { name: 'あか',   c: '#ff5a5a' },
+  { name: 'あお',   c: '#4d9fff' },
+  { name: 'みどり', c: '#3ddc84' },
+  { name: 'きいろ', c: '#ffd34d' },
+];
+ST_COLORS.forEach((col, idx) => {
+  const b = document.createElement('button');
+  b.className = 'stroop-btn';
+  b.style.background = col.c;
+  b.dataset.i = idx;
+  b.setAttribute('aria-label', col.name);
+  $('#st-btns').appendChild(b);
+});
+let st = null;
+$('#st-start').addEventListener('click', () => {
+  st = { i: 0, total: 20, correct: 0, times: [], t0: 0, ink: -1, busy: false };
+  $('#st-setup').style.display = 'none';
+  $('#st-play').style.display = 'flex';
+  cancelGame = () => { st = null; };
+  stNext();
+});
+function stNext() {
+  if (!st) return;
+  if (st.i >= st.total) { stEnd(); return; }
+  $('#st-hud').textContent = `${st.i + 1} / ${st.total}`;
+  st.ink = rnd(0, 3);
+  let word = st.ink;
+  if (Math.random() < 0.75) { do { word = rnd(0, 3); } while (word === st.ink); }
+  const el = $('#st-word');
+  el.textContent = ST_COLORS[word].name;
+  el.style.color = ST_COLORS[st.ink].c;
+  st.busy = false;
+  st.t0 = performance.now();
+}
+$('#st-btns').addEventListener('click', e => {
+  const b = e.target.closest('.stroop-btn');
+  if (!b || !st || st.busy) return;
+  st.busy = true;
+  const ok = +b.dataset.i === st.ink;
+  if (ok) { st.correct++; st.times.push(performance.now() - st.t0); }
+  flashStage('#st-stage', ok);
+  st.i++;
+  setTimeout(stNext, 260);
+});
+function stEnd() {
+  const { correct, total, times } = st;
+  st = null; cancelGame = null;
+  const avg = times.length ? Math.round(times.reduce((a, b) => a + b) / times.length) : 0;
+  // スコア: 正答率ベース + 速さボーナス（平均1500ms以下で加点、最大20点）
+  const speedBonus = times.length ? Math.max(0, Math.min(20, Math.round((1500 - avg) / 50))) : 0;
+  const score = Math.round(80 * correct / total) + speedBonus;
+  record('stroop', score);
+  showResult('stroop', `${score} 点`,
+    `正解 ${correct}/${total} ・ 平均反応 ${avg}ms\nベスト: ${bestOf('stroop')}点`);
+}
+
+/* ---------- keypad builder (calc / span 共用) ---------- */
+function buildKeypad(padSel, onKey) {
+  const keys = ['7','8','9','4','5','6','1','2','3','C','0','OK'];
+  const pad = $(padSel);
+  keys.forEach(k => {
+    const b = document.createElement('button');
+    b.className = 'key' + (k === 'OK' || k === 'C' ? ' action' : '');
+    b.textContent = k;
+    b.addEventListener('click', () => onKey(k));
+    pad.appendChild(b);
+  });
+}
+
+/* ============================================================
+   3) CALC
+   ============================================================ */
+let ca = null;
+buildKeypad('#ca-pad', k => {
+  if (!ca) return;
+  if (k === 'C') ca.input = '';
+  else if (k === 'OK') caSubmit();
+  else if (ca.input.length < 4) ca.input += k;
+  $('#ca-ans').textContent = ca.input || ' ';
+});
+$('#ca-start').addEventListener('click', () => {
+  ca = { i: 0, total: 20, correct: 0, input: '', q: null, t0: performance.now(), hudTimer: null };
+  $('#ca-setup').style.display = 'none';
+  $('#ca-play').style.display = 'flex';
+  cancelGame = () => { if (ca) clearInterval(ca.hudTimer); ca = null; };
+  ca.hudTimer = setInterval(() => {
+    if (ca) $('#ca-hud').textContent = `${ca.i + 1}/${ca.total} ・ ${((performance.now() - ca.t0) / 1000).toFixed(1)}s`;
+  }, 100);
+  caNext();
+});
+function caGen() {
+  const t = rnd(0, 2);
+  if (t === 0) { const a = rnd(2, 19), b = rnd(2, 19); return { q: `${a} + ${b}`, ans: a + b }; }
+  if (t === 1) { const a = rnd(5, 20), b = rnd(2, a - 1); return { q: `${a} − ${b}`, ans: a - b }; }
+  const a = rnd(2, 9), b = rnd(2, 9); return { q: `${a} × ${b}`, ans: a * b };
+}
+function caNext() {
+  if (!ca) return;
+  if (ca.i >= ca.total) { caEnd(); return; }
+  ca.q = caGen();
+  ca.input = '';
+  $('#ca-q').textContent = ca.q.q;
+  $('#ca-ans').textContent = ' ';
+}
+function caSubmit() {
+  if (!ca || ca.input === '') return;
+  const ok = +ca.input === ca.q.ans;
+  if (ok) ca.correct++;
+  flashStage('#ca-stage', ok);
+  ca.i++;
+  caNext();
+}
+function caEnd() {
+  const sec = Math.round((performance.now() - ca.t0) / 10) / 100;
+  const { correct, total } = ca;
+  clearInterval(ca.hudTimer);
+  ca = null; cancelGame = null;
+  record('calc', Math.round(sec), `${correct}/${total}正解`);
+  showResult('calc', `${sec.toFixed(1)} 秒`,
+    `正解 ${correct}/${total}\nベスト: ${bestOf('calc')}秒`);
+}
+
+/* ============================================================
+   4) DIGIT SPAN
+   ============================================================ */
+let spMode = 'fwd';
+$('#sp-mode').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  spMode = b.dataset.mode;
+  $$('#sp-mode button').forEach(x => x.classList.toggle('on', x === b));
+});
+let sp = null;
+buildKeypad('#sp-pad', k => {
+  if (!sp || sp.phase !== 'entry') return;
+  if (k === 'C') sp.input = '';
+  else if (k === 'OK') spSubmit();
+  else if (sp.input.length < sp.seq.length) sp.input += k;
+  $('#sp-ans').textContent = sp.input || ' ';
+});
+$('#sp-start').addEventListener('click', () => {
+  sp = {
+    mode: spMode, len: spMode === 'fwd' ? 3 : 2,
+    maxOk: 0, fails: 0, seq: [], input: '', phase: 'show', timers: [],
+  };
+  $('#sp-setup').style.display = 'none';
+  cancelGame = () => { sp && sp.timers.forEach(clearTimeout); sp = null; };
+  spRound();
+});
+function spRound() {
+  if (!sp) return;
+  sp.phase = 'show';
+  sp.seq = [];
+  for (let i = 0; i < sp.len; i++) {
+    let d;
+    do { d = rnd(0, 9); } while (i > 0 && d === sp.seq[i - 1]);
+    sp.seq.push(d);
+  }
+  sp.input = '';
+  $('#sp-hud').textContent = `${sp.len} 桁`;
+  $('#sp-entry').style.display = 'none';
+  $('#sp-show').style.display = 'flex';
+  const el = $('#sp-digit');
+  sp.seq.forEach((d, i) => {
+    sp.timers.push(setTimeout(() => { el.textContent = d; el.style.opacity = 1; }, i * 900));
+    sp.timers.push(setTimeout(() => { el.style.opacity = 0; }, i * 900 + 650));
+  });
+  sp.timers.push(setTimeout(() => {
+    if (!sp) return;
+    sp.phase = 'entry';
+    $('#sp-show').style.display = 'none';
+    $('#sp-entry').style.display = 'flex';
+    $('#sp-prompt').innerHTML = sp.mode === 'fwd'
+      ? '表示された<b>順</b>に入力'
+      : '表示と<b>逆順</b>に入力';
+    $('#sp-ans').textContent = ' ';
+  }, sp.len * 900 + 200));
+}
+function spSubmit() {
+  if (!sp || sp.input.length !== sp.seq.length) return;
+  const target = sp.mode === 'fwd' ? sp.seq.join('') : [...sp.seq].reverse().join('');
+  const ok = sp.input === target;
+  flashStage('#sp-stage', ok);
+  if (ok) {
+    sp.maxOk = sp.len;
+    sp.len++;
+    sp.fails = 0;
+  } else {
+    sp.fails++;
+    if (sp.fails >= 2) { spEnd(); return; }
+  }
+  sp.timers.push(setTimeout(spRound, 500));
+}
+function spEnd() {
+  const { maxOk, mode } = sp;
+  sp.timers.forEach(clearTimeout);
+  sp = null; cancelGame = null;
+  const label = mode === 'fwd' ? '順唱' : '逆唱';
+  record('span', maxOk, label);
+  showResult('span', `${maxOk} 桁`,
+    `${label}で ${maxOk} 桁まで成功\nベスト: ${bestOf('span')}桁`);
+}
+
+/* ============================================================
+   RECORDS
+   ============================================================ */
+function renderRecords() {
+  const wrap = $('#rec-list');
+  wrap.innerHTML = '';
+  for (const [g, meta] of Object.entries(GAMES)) {
+    const h = historyOf(g).slice(-10);
+    const block = document.createElement('div');
+    block.className = 'rec-block';
+    const best = bestOf(g);
+    let inner = `<div class="rec-title">${meta.name}
+      <small>${best === null ? '記録なし' : `ベスト ${best}${meta.unit} ・ ${historyOf(g).length}回`}</small></div>`;
+    if (!h.length) {
+      inner += '<div class="rec-empty">まだプレイしていません</div>';
+    } else {
+      const max = Math.max(...h.map(e => e.score), 1);
+      inner += '<div class="rec-chart">' + h.map((e, i) =>
+        `<div class="rec-bar${i === h.length - 1 ? ' last' : ''}"
+          style="height:${Math.max(6, Math.round(100 * e.score / max))}%">
+          <span>${e.score}</span></div>`).join('') + '</div>';
+    }
+    block.innerHTML = inner;
+    wrap.appendChild(block);
+  }
+}
+
+/* ---------- init ---------- */
+renderHome();
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>
