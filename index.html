@@ -15,7 +15,7 @@
   --bg:#0b0f16; --surface:#131a28; --surface2:#1b2436;
   --navy:#2f5d8f; --accent:#5b9bd5; --accent2:#8fc1ee;
   --text:#f2f5f9; --muted:#8a94a6; --line:#243247;
-  --good:#3ddc84; --bad:#ff5a5a;
+  --good:#3ddc84; --bad:#ff5a5a; --gold:#ffd34d;
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 button{touch-action:manipulation}
@@ -34,10 +34,20 @@ body{
 .app-title{font-size:22px;font-weight:800;letter-spacing:.02em}
 .app-title span{color:var(--accent)}
 .date-label{color:var(--muted);font-size:13px}
+.level-box{
+  background:linear-gradient(135deg,var(--surface),var(--surface2));
+  border:1px solid var(--line);border-radius:14px;
+  padding:12px 16px;margin:16px 0 10px;
+}
+.level-line{display:flex;justify-content:space-between;align-items:baseline;font-size:14px;margin-bottom:8px}
+.level-line b{color:var(--gold)}
+.level-line small{color:var(--muted);font-variant-numeric:tabular-nums}
+.xp-bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+.xp-fill{height:100%;background:linear-gradient(90deg,var(--navy),var(--accent));border-radius:3px;transition:width .4s}
 .streak{
   background:linear-gradient(135deg,var(--surface),var(--surface2));
   border:1px solid var(--line);border-radius:14px;
-  padding:14px 16px;margin:16px 0 20px;
+  padding:14px 16px;margin:0 0 20px;
   display:flex;justify-content:space-between;align-items:center;
 }
 .streak b{font-size:26px;color:var(--accent2)}
@@ -47,9 +57,14 @@ body{
   background:var(--surface);border:1px solid var(--line);border-radius:14px;
   padding:16px;margin-bottom:12px;color:var(--text);
   display:flex;align-items:center;gap:14px;cursor:pointer;
-  transition:transform .05s;
+  transition:transform .05s;position:relative;
 }
 .game-card:active{transform:scale(.98)}
+.game-card.suggest{border-color:var(--accent)}
+.suggest-chip{
+  position:absolute;top:-9px;left:14px;background:var(--navy);color:#fff;
+  font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;
+}
 .game-icon{
   width:46px;height:46px;border-radius:12px;flex-shrink:0;
   background:var(--navy);display:flex;align-items:center;justify-content:center;
@@ -65,6 +80,7 @@ body{
   flex:1;background:none;border:1px solid var(--line);border-radius:12px;
   color:var(--muted);padding:12px;font-size:14px;cursor:pointer;
 }
+.version{text-align:center;color:var(--muted);font-size:11px;margin-top:14px;opacity:.7}
 
 /* ---------- Game common ---------- */
 .game-header{display:flex;align-items:center;gap:10px;margin-bottom:14px}
@@ -86,10 +102,12 @@ body{
 .big-btn:active{background:var(--accent)}
 .big-btn[disabled]{opacity:.35}
 .sub-note{font-size:13px;color:var(--muted);text-align:center;line-height:1.7}
+.set-row{display:flex;align-items:center;gap:10px}
+.set-row small{color:var(--muted);font-size:12px;width:52px;text-align:right;flex-shrink:0}
 .seg{display:flex;background:var(--surface2);border-radius:10px;padding:3px;gap:3px}
 .seg button{
-  border:none;background:none;color:var(--muted);padding:8px 16px;
-  border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;
+  border:none;background:none;color:var(--muted);padding:8px 13px;
+  border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;
 }
 .seg button.on{background:var(--navy);color:#fff}
 
@@ -110,7 +128,6 @@ body{
   font-size:19px;font-weight:800;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.6);
 }
 .stroop-btn:active{filter:brightness(1.3)}
-.version{text-align:center;color:var(--muted);font-size:11px;margin-top:14px;opacity:.7}
 
 /* ---------- Calc / Span keypad ---------- */
 .q-display{font-size:42px;font-weight:800;font-variant-numeric:tabular-nums;min-height:60px}
@@ -128,6 +145,19 @@ body{
 .key.action{background:var(--navy);border-color:var(--navy)}
 .span-digit{font-size:88px;font-weight:900;color:var(--accent2);font-variant-numeric:tabular-nums}
 
+/* ---------- Faces ---------- */
+.fc-card{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}
+.fc-name{font-size:24px;font-weight:800;margin-top:4px}
+.fc-prof{font-size:14px;color:var(--muted)}
+.fc-q{font-size:17px;font-weight:700}
+.fc-fb{font-size:13px;color:var(--bad);min-height:18px;font-weight:700}
+.choice-list{width:100%;display:flex;flex-direction:column;gap:8px}
+.choice-btn{
+  width:100%;padding:14px;border-radius:12px;background:var(--surface2);
+  border:1px solid var(--line);color:var(--text);font-size:16px;font-weight:700;cursor:pointer;
+}
+.choice-btn:active{background:var(--navy)}
+
 /* ---------- Result overlay ---------- */
 #overlay{
   position:fixed;inset:0;background:rgba(5,8,13,.86);display:none;
@@ -137,15 +167,17 @@ body{
 .result-card{
   background:var(--surface);border:1px solid var(--line);border-radius:20px;
   padding:28px 24px;width:100%;max-width:360px;text-align:center;
+  max-height:86vh;overflow-y:auto;
 }
 .result-card h3{font-size:16px;color:var(--muted);font-weight:600}
 .result-score{font-size:52px;font-weight:900;color:var(--accent2);margin:10px 0 2px}
-.result-sub{font-size:14px;color:var(--muted);line-height:1.8;margin-bottom:20px;white-space:pre-line}
+.result-sub{font-size:14px;color:var(--muted);line-height:1.8;margin-bottom:12px;white-space:pre-line}
+.result-xp{font-size:14px;color:var(--gold);font-weight:700;line-height:1.9;margin-bottom:16px;white-space:pre-line}
 .result-btns{display:flex;gap:10px}
 .result-btns .big-btn{font-size:15px;padding:14px}
 .result-btns .btn-ghost{padding:14px}
 
-/* ---------- Records ---------- */
+/* ---------- Records / Badges ---------- */
 .rec-block{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px}
 .rec-title{display:flex;justify-content:space-between;font-size:14px;font-weight:700;margin-bottom:10px}
 .rec-title small{color:var(--muted);font-weight:400}
@@ -154,6 +186,11 @@ body{
 .rec-bar.last{background:var(--accent)}
 .rec-bar span{position:absolute;top:-16px;left:0;right:0;text-align:center;font-size:9px;color:var(--muted)}
 .rec-empty{color:var(--muted);font-size:13px}
+.badge-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.badge{background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:10px}
+.badge.off{opacity:.32}
+.badge b{font-size:13px;display:block}
+.badge small{font-size:11px;color:var(--muted);line-height:1.4;display:block;margin-top:2px}
 </style>
 </head>
 <body>
@@ -164,11 +201,16 @@ body{
     <div class="app-title">Brain <span>Gym</span></div>
     <div class="date-label" id="home-date"></div>
   </div>
-  <div class="date-label">前頭葉ジム — 1日4種目、10分で完了</div>
+  <div class="date-label">前頭葉ジム — 1日1種目でもOK、続けるが勝ち</div>
+
+  <div class="level-box">
+    <div class="level-line"><span>Lv.<b id="level-num"></b> <b id="level-title"></b></span><small id="xp-num"></small></div>
+    <div class="xp-bar"><div class="xp-fill" id="xp-fill"></div></div>
+  </div>
 
   <div class="streak">
     <div><small>連続トレーニング</small><br><b id="streak-days">0</b> 日</div>
-    <div style="text-align:right"><small>今日の完了</small><br><b id="today-count">0</b><small> / 4 種目</small></div>
+    <div style="text-align:right"><small>今日の完了</small><br><b id="today-count">0</b><small> / 5 種目</small></div>
   </div>
 
   <button class="game-card" data-game="nback">
@@ -193,7 +235,7 @@ body{
     <div class="game-icon">＋</div>
     <div class="game-info">
       <div class="game-name">計算スピード</div>
-      <div class="game-desc">処理速度 — 単純計算20問をどれだけ速く</div>
+      <div class="game-desc">処理速度 — 単純計算をどれだけ速く</div>
     </div>
     <div class="game-stat" id="stat-calc"></div>
   </button>
@@ -207,8 +249,17 @@ body{
     <div class="game-stat" id="stat-span"></div>
   </button>
 
+  <button class="game-card" data-game="faces">
+    <div class="game-icon">顔</div>
+    <div class="game-info">
+      <div class="game-name">顔と名前</div>
+      <div class="game-desc">人物記憶 — 顔・名前・プロフィールを覚える</div>
+    </div>
+    <div class="game-stat" id="stat-faces"></div>
+  </button>
+
   <div class="link-row">
-    <button class="btn-ghost" id="btn-records">📈 記録を見る</button>
+    <button class="btn-ghost" id="btn-records">📈 記録と実績</button>
   </div>
   <div class="version" id="version-label"></div>
 </div>
@@ -221,13 +272,23 @@ body{
     <div class="hud" id="nb-hud"></div>
   </div>
   <div class="stage" id="nb-stage">
-    <div id="nb-setup" style="display:flex;flex-direction:column;align-items:center;gap:18px">
-      <div class="seg" id="nb-level">
-        <button data-n="1">1バック</button>
-        <button data-n="2" class="on">2バック</button>
-        <button data-n="3">3バック</button>
+    <div id="nb-setup" style="display:flex;flex-direction:column;align-items:center;gap:14px">
+      <div class="set-row"><small>レベル</small>
+        <div class="seg" data-game="nback" data-key="n">
+          <button data-v="1">1バック</button><button data-v="2">2バック</button><button data-v="3">3バック</button>
+        </div>
       </div>
-      <p class="sub-note">マスが光る位置を覚えて、<br><b>N個前と同じ位置</b>で光ったら「一致！」を押す。<br>全22回・約1分。</p>
+      <div class="set-row"><small>速さ</small>
+        <div class="seg" data-game="nback" data-key="speed">
+          <button data-v="2600">ゆっくり</button><button data-v="2100">ふつう</button><button data-v="1700">はやい</button>
+        </div>
+      </div>
+      <div class="set-row"><small>回数</small>
+        <div class="seg" data-game="nback" data-key="trials">
+          <button data-v="15">15回</button><button data-v="20">20回</button><button data-v="30">30回</button>
+        </div>
+      </div>
+      <p class="sub-note">マスが光る位置を覚えて、<br><b>N個前と同じ位置</b>で光ったら「一致！」を押す。</p>
       <button class="big-btn" id="nb-start">スタート</button>
     </div>
     <div id="nb-play" style="display:none;flex-direction:column;align-items:center">
@@ -245,8 +306,18 @@ body{
     <div class="hud" id="st-hud"></div>
   </div>
   <div class="stage" id="st-stage">
-    <div id="st-setup" style="display:flex;flex-direction:column;align-items:center;gap:18px">
-      <p class="sub-note">文字の<b>意味は無視</b>して、<br>表示された<b>文字の色</b>のボタンを押す。<br>全20問、速さと正確さの勝負。</p>
+    <div id="st-setup" style="display:flex;flex-direction:column;align-items:center;gap:14px">
+      <div class="set-row"><small>問題数</small>
+        <div class="seg" data-game="stroop" data-key="trials">
+          <button data-v="10">10問</button><button data-v="20">20問</button><button data-v="30">30問</button>
+        </div>
+      </div>
+      <div class="set-row"><small>ひっかけ</small>
+        <div class="seg" data-game="stroop" data-key="incong">
+          <button data-v="0.5">ゆるめ</button><button data-v="0.75">ふつう</button><button data-v="1">鬼</button>
+        </div>
+      </div>
+      <p class="sub-note">文字の<b>意味は無視</b>して、<br>表示された<b>文字の色</b>のボタンを押す。</p>
       <button class="big-btn" id="st-start">スタート</button>
     </div>
     <div id="st-play" style="display:none;flex-direction:column;align-items:center;width:100%">
@@ -265,8 +336,18 @@ body{
     <div class="hud" id="ca-hud"></div>
   </div>
   <div class="stage" id="ca-stage">
-    <div id="ca-setup" style="display:flex;flex-direction:column;align-items:center;gap:18px">
-      <p class="sub-note">たし算・ひき算・かけ算 20問。<br>答えを入力して <b>OK</b>。速さ勝負。</p>
+    <div id="ca-setup" style="display:flex;flex-direction:column;align-items:center;gap:14px">
+      <div class="set-row"><small>問題数</small>
+        <div class="seg" data-game="calc" data-key="count">
+          <button data-v="10">10問</button><button data-v="20">20問</button><button data-v="30">30問</button>
+        </div>
+      </div>
+      <div class="set-row"><small>難易度</small>
+        <div class="seg" data-game="calc" data-key="level">
+          <button data-v="0">やさしい</button><button data-v="1">ふつう</button><button data-v="2">むずかしい</button>
+        </div>
+      </div>
+      <p class="sub-note">たし算・ひき算・かけ算。<br>答えを入力して <b>OK</b>。速さ勝負。</p>
       <button class="big-btn" id="ca-start">スタート</button>
     </div>
     <div id="ca-play" style="display:none;flex-direction:column;align-items:center;gap:14px;width:100%">
@@ -285,10 +366,21 @@ body{
     <div class="hud" id="sp-hud"></div>
   </div>
   <div class="stage" id="sp-stage">
-    <div id="sp-setup" style="display:flex;flex-direction:column;align-items:center;gap:18px">
-      <div class="seg" id="sp-mode">
-        <button data-mode="fwd" class="on">順唱</button>
-        <button data-mode="rev">逆唱</button>
+    <div id="sp-setup" style="display:flex;flex-direction:column;align-items:center;gap:14px">
+      <div class="set-row"><small>モード</small>
+        <div class="seg" data-game="span" data-key="mode">
+          <button data-v="fwd">順唱</button><button data-v="rev">逆唱</button>
+        </div>
+      </div>
+      <div class="set-row"><small>開始桁</small>
+        <div class="seg" data-game="span" data-key="start">
+          <button data-v="3">3桁</button><button data-v="4">4桁</button><button data-v="5">5桁</button>
+        </div>
+      </div>
+      <div class="set-row"><small>速さ</small>
+        <div class="seg" data-game="span" data-key="speed">
+          <button data-v="1100">ゆっくり</button><button data-v="900">ふつう</button><button data-v="700">はやい</button>
+        </div>
       </div>
       <p class="sub-note">1つずつ表示される数字を覚えて、<br>終わったら<b>同じ順（逆唱は逆順）</b>で入力。<br>成功するたび1桁ずつ長くなる。</p>
       <button class="big-btn" id="sp-start">スタート</button>
@@ -304,11 +396,46 @@ body{
   </div>
 </div>
 
+<!-- ============ FACES ============ -->
+<div class="screen" id="scr-faces">
+  <div class="game-header">
+    <button class="btn-back" data-home>←</button>
+    <h2>顔と名前</h2>
+    <div class="hud" id="fc-hud"></div>
+  </div>
+  <div class="stage" id="fc-stage">
+    <div id="fc-setup" style="display:flex;flex-direction:column;align-items:center;gap:14px">
+      <div class="set-row"><small>人数</small>
+        <div class="seg" data-game="faces" data-key="people">
+          <button data-v="3">3人</button><button data-v="4">4人</button><button data-v="6">6人</button>
+        </div>
+      </div>
+      <div class="set-row"><small>出題</small>
+        <div class="seg" data-game="faces" data-key="deep">
+          <button data-v="false">名前だけ</button><button data-v="true">名前+プロフ</button>
+        </div>
+      </div>
+      <p class="sub-note">初対面の人たちの<b>顔・名前・プロフィール</b>を覚えて、<br>あとからテスト。自分のペースで覚えてOK。</p>
+      <button class="big-btn" id="fc-start">スタート</button>
+    </div>
+    <div id="fc-memo" style="display:none;flex-direction:column;align-items:center;gap:16px;width:100%">
+      <div class="fc-card" id="fc-card"></div>
+      <button class="big-btn" id="fc-next"></button>
+    </div>
+    <div id="fc-quiz" style="display:none;flex-direction:column;align-items:center;gap:10px;width:100%">
+      <div id="fc-face"></div>
+      <div class="fc-q" id="fc-q"></div>
+      <div class="fc-fb" id="fc-fb"></div>
+      <div class="choice-list" id="fc-choices"></div>
+    </div>
+  </div>
+</div>
+
 <!-- ============ RECORDS ============ -->
 <div class="screen" id="scr-records">
   <div class="game-header">
     <button class="btn-back" data-home>←</button>
-    <h2>記録</h2>
+    <h2>記録と実績</h2>
   </div>
   <div id="rec-list"></div>
 </div>
@@ -319,6 +446,7 @@ body{
     <h3 id="res-title"></h3>
     <div class="result-score" id="res-score"></div>
     <div class="result-sub" id="res-sub"></div>
+    <div class="result-xp" id="res-xp"></div>
     <div class="result-btns">
       <button class="btn-ghost" data-home style="flex:1">ホーム</button>
       <button class="big-btn" id="res-retry" style="flex:1">もう一回</button>
@@ -329,22 +457,25 @@ body{
 <script>
 'use strict';
 /* ============================================================
-   Brain Gym — 前頭葉・ワーキングメモリ トレーニング PWA
+   Brain Gym v4 — 前頭葉・ワーキングメモリ・人物記憶トレーニング PWA
    ============================================================ */
 const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
 const rnd = (min, max) => min + Math.floor(Math.random() * (max - min + 1));
+const pick = a => a[rnd(0, a.length - 1)];
+const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = rnd(0, i); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const todayStr = () => {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 };
 
-/* ---------- storage ---------- */
+/* ---------- games / storage ---------- */
 const GAMES = {
-  nback: { name: 'Nバック',       unit: '点',  betterHigh: true },
-  stroop:{ name: 'ストループ',     unit: '点',  betterHigh: true },
-  calc:  { name: '計算スピード',   unit: '秒',  betterHigh: false },
-  span:  { name: '数字スパン',     unit: '桁',  betterHigh: true },
+  nback: { name: 'Nバック',     unit: '点', betterHigh: true },
+  stroop:{ name: 'ストループ',   unit: '点', betterHigh: true },
+  calc:  { name: '計算スピード', unit: '秒', betterHigh: false },
+  span:  { name: '数字スパン',   unit: '桁', betterHigh: true },
+  faces: { name: '顔と名前',     unit: '点', betterHigh: true },
 };
 const store = {
   load() { try { return JSON.parse(localStorage.getItem('brainGym') || '{}'); } catch { return {}; } },
@@ -364,6 +495,9 @@ function bestOf(game) {
   return GAMES[game].betterHigh ? Math.max(...vals) : Math.min(...vals);
 }
 function playedToday(game) { return historyOf(game).some(e => e.date === todayStr()); }
+function totalSessions(d) {
+  return Object.values((d || store.load()).history || {}).reduce((a, h) => a + h.length, 0);
+}
 function streakDays() {
   const dates = new Set();
   Object.values(store.load().history || {}).forEach(h => h.forEach(e => dates.add(e.date)));
@@ -377,6 +511,81 @@ function streakDays() {
     d.setDate(d.getDate() - 1);
   }
   return n;
+}
+
+/* ---------- settings ---------- */
+const DEFAULT_SET = {
+  nback: { n: 2, speed: 2100, trials: 20 },
+  stroop:{ trials: 20, incong: 0.75 },
+  calc:  { count: 20, level: 1 },
+  span:  { mode: 'fwd', start: 3, speed: 900 },
+  faces: { people: 4, deep: true },
+};
+function getSet(game) { return { ...DEFAULT_SET[game], ...((store.load().settings || {})[game] || {}) }; }
+function setSet(game, key, val) {
+  const d = store.load();
+  d.settings = d.settings || {};
+  d.settings[game] = { ...(d.settings[game] || {}), [key]: val };
+  store.save(d);
+}
+const parseV = v => { try { return JSON.parse(v); } catch { return v; } };
+document.addEventListener('click', e => {
+  const b = e.target.closest('.seg button');
+  if (!b) return;
+  const seg = b.closest('.seg');
+  if (!seg.dataset.game) return;
+  setSet(seg.dataset.game, seg.dataset.key, parseV(b.dataset.v));
+  [...seg.children].forEach(x => x.classList.toggle('on', x === b));
+});
+function syncSegs(screenId) {
+  $$(`#${screenId} .seg`).forEach(seg => {
+    const cur = getSet(seg.dataset.game)[seg.dataset.key];
+    [...seg.children].forEach(b => b.classList.toggle('on', parseV(b.dataset.v) === cur));
+  });
+}
+
+/* ---------- gamification ---------- */
+const TITLES = ['ねぼけ脳', 'めざめ脳', '散歩脳', '常連', '鍛錬者', '切れ者', '策士', '賢人', '達人', '前頭葉マスター'];
+function levelFromXp(xp) {
+  let lv = 1, rem = xp, need = 80;
+  while (rem >= need) { rem -= need; lv++; need = 80 + 40 * (lv - 1); }
+  return { lv, rem, need };
+}
+const titleOf = lv => TITLES[Math.min(lv - 1, TITLES.length - 1)];
+const BADGES = [
+  { id: 'first',    name: '初トレーニング', desc: '初めてセッションを完了', check: d => totalSessions(d) >= 1 },
+  { id: 'allday',   name: 'フルコース',     desc: '1日で全5種目を完了',     check: () => Object.keys(GAMES).every(playedToday) },
+  { id: 'streak3',  name: '三日坊主超え',   desc: '3日連続トレーニング',    check: () => streakDays() >= 3 },
+  { id: 'streak7',  name: '週間皆勤',       desc: '7日連続トレーニング',    check: () => streakDays() >= 7 },
+  { id: 'streak30', name: '習慣の完成',     desc: '30日連続トレーニング',   check: () => streakDays() >= 30 },
+  { id: 'nb3',      name: '三歩先読み',     desc: '3バックで80点以上',      check: (d, l) => l.game === 'nback' && l.label === '3バック' && l.score >= 80 },
+  { id: 'stroop95', name: '鉄の抑制力',     desc: 'ストループ95点以上',     check: (d, l) => l.game === 'stroop' && l.score >= 95 },
+  { id: 'span8',    name: '記憶の達人',     desc: '数字スパン8桁到達',      check: (d, l) => l.game === 'span' && l.score >= 8 },
+  { id: 'calc25',   name: '電光石火',       desc: '計算20問を25秒以内(18問以上正解)', check: (d, l) => l.game === 'calc' && l.count === 20 && l.score <= 25 && l.correct >= 18 },
+  { id: 'faces100', name: '顔パス',         desc: '顔と名前で満点',         check: (d, l) => l.game === 'faces' && l.score >= 100 },
+  { id: 'sess50',   name: '常連さん',       desc: '通算50セッション',       check: d => totalSessions(d) >= 50 },
+];
+function awardSession(game, score, extra) {
+  const d = store.load();
+  d.gami = d.gami || { xp: 0, badges: {} };
+  const bonusMap = {
+    nback: l => Math.round(l.score / 4) + (+String(l.label)[0] || 2) * 5,
+    stroop: l => Math.round(l.score / 4),
+    calc: l => (l.correct || 0),
+    span: l => l.score * 4,
+    faces: l => Math.round(l.score / 4) + (l.people || 4) * 2,
+  };
+  const last = { game, score, ...(extra || {}) };
+  const gain = 15 + Math.max(0, bonusMap[game](last));
+  const before = levelFromXp(d.gami.xp).lv;
+  d.gami.xp += gain;
+  const after = levelFromXp(d.gami.xp);
+  const news = [];
+  for (const b of BADGES) {
+    if (!d.gami.badges[b.id] && b.check(d, last)) { d.gami.badges[b.id] = todayStr(); news.push(b); }
+  }
+  store.save(d);
+  return { gain, levelUp: after.lv > before ? after.lv : 0, news };
 }
 
 /* ---------- navigation ---------- */
@@ -394,19 +603,24 @@ $('#btn-records').addEventListener('click', () => show('scr-records'));
 
 function openGame(game) {
   show('scr-' + game);
-  // セットアップ画面に戻す
+  syncSegs('scr-' + game);
   if (game === 'nback') { $('#nb-setup').style.display = 'flex'; $('#nb-play').style.display = 'none'; $('#nb-hud').textContent = ''; }
   if (game === 'stroop'){ $('#st-setup').style.display = 'flex'; $('#st-play').style.display = 'none'; $('#st-hud').textContent = ''; }
   if (game === 'calc')  { $('#ca-setup').style.display = 'flex'; $('#ca-play').style.display = 'none'; $('#ca-hud').textContent = ''; }
   if (game === 'span')  { $('#sp-setup').style.display = 'flex'; $('#sp-show').style.display = 'none'; $('#sp-entry').style.display = 'none'; $('#sp-hud').textContent = ''; }
+  if (game === 'faces') { $('#fc-setup').style.display = 'flex'; $('#fc-memo').style.display = 'none'; $('#fc-quiz').style.display = 'none'; $('#fc-hud').textContent = ''; }
 }
 
 let lastGame = null;
-function showResult(game, scoreText, sub) {
+function showResult(game, scoreText, sub, award) {
   lastGame = game;
   $('#res-title').textContent = GAMES[game].name;
   $('#res-score').textContent = scoreText;
   $('#res-sub').textContent = sub;
+  let xpText = award ? `+${award.gain} XP` : '';
+  if (award && award.levelUp) xpText += `\n⬆️ レベルアップ！ Lv.${award.levelUp} ${titleOf(award.levelUp)}`;
+  if (award && award.news.length) xpText += award.news.map(b => `\n🏅 実績解除「${b.name}」`).join('');
+  $('#res-xp').textContent = xpText;
   $('#overlay').classList.add('active');
 }
 $('#res-retry').addEventListener('click', () => {
@@ -420,12 +634,27 @@ function renderHome() {
   $('#home-date').textContent = `${d.getMonth()+1}/${d.getDate()} (${'日月火水木金土'[d.getDay()]})`;
   $('#streak-days').textContent = streakDays();
   $('#today-count').textContent = Object.keys(GAMES).filter(playedToday).length;
+  const gami = store.load().gami || { xp: 0, badges: {} };
+  const L = levelFromXp(gami.xp);
+  $('#level-num').textContent = L.lv;
+  $('#level-title').textContent = titleOf(L.lv);
+  $('#xp-num').textContent = `${L.rem} / ${L.need} XP`;
+  $('#xp-fill').style.width = Math.round(100 * L.rem / L.need) + '%';
+  // 怠け者導線: まだやってない最初の1種目に「今日はこれだけでもOK」
+  let suggested = false;
   for (const g of Object.keys(GAMES)) {
     const best = bestOf(g);
-    const el = $('#stat-' + g);
-    el.innerHTML =
+    $('#stat-' + g).innerHTML =
       (playedToday(g) ? '<span class="done">✓ 今日済</span>' : '<span>未実施</span>') +
       '<br>' + (best === null ? '—' : `ベスト ${best}${GAMES[g].unit}`);
+    const card = $(`.game-card[data-game="${g}"]`);
+    card.classList.remove('suggest');
+    card.querySelector('.suggest-chip')?.remove();
+    if (!suggested && !playedToday(g)) {
+      suggested = true;
+      card.classList.add('suggest');
+      card.insertAdjacentHTML('afterbegin', '<span class="suggest-chip">▶ 今日はこれだけでもOK</span>');
+    }
   }
 }
 
@@ -440,13 +669,6 @@ function flashStage(stageSel, ok) {
 /* ============================================================
    1) N-BACK
    ============================================================ */
-let nbN = 2;
-$('#nb-level').addEventListener('click', e => {
-  const b = e.target.closest('button'); if (!b) return;
-  nbN = +b.dataset.n;
-  $$('#nb-level button').forEach(x => x.classList.toggle('on', x === b));
-});
-// grid cells
 for (let i = 0; i < 9; i++) {
   const c = document.createElement('div');
   c.className = 'nb-cell'; c.dataset.i = i;
@@ -454,7 +676,8 @@ for (let i = 0; i < 9; i++) {
 }
 let nb = null;
 $('#nb-start').addEventListener('click', () => {
-  const n = nbN, len = 20 + n;
+  const cfg = getSet('nback');
+  const n = cfg.n, len = cfg.trials + n;
   const seq = [];
   for (let i = 0; i < len; i++) {
     if (i >= n && Math.random() < 0.35) { seq.push(seq[i - n]); }
@@ -465,7 +688,7 @@ $('#nb-start').addEventListener('click', () => {
     }
   }
   nb = {
-    seq, n, i: -1, hits: 0, fa: 0, responded: false, timers: [],
+    seq, n, speed: cfg.speed, i: -1, hits: 0, fa: 0, responded: false, t0: 0, timers: [],
     targets: seq.filter((v, i) => i >= n && v === seq[i - n]).length,
   };
   $('#nb-setup').style.display = 'none';
@@ -483,7 +706,7 @@ function nbStep() {
   const cell = $(`.nb-cell[data-i="${nb.seq[nb.i]}"]`);
   cell.classList.add('lit');
   nb.timers.push(setTimeout(() => cell.classList.remove('lit'), 650));
-  nb.timers.push(setTimeout(nbStep, 2100));
+  nb.timers.push(setTimeout(nbStep, nb.speed));
 }
 $('#nb-match').addEventListener('click', () => {
   if (!nb || nb.i < nb.n || nb.responded) return;
@@ -499,9 +722,11 @@ function nbEnd() {
   nb.timers.forEach(clearTimeout);
   nb = null; cancelGame = null;
   const score = targets ? Math.max(0, Math.round(100 * (hits - fa * 0.5) / targets)) : 100;
-  record('nback', score, `${n}バック`);
+  const label = `${n}バック`;
+  record('nback', score, label);
+  const aw = awardSession('nback', score, { label });
   showResult('nback', `${score} 点`,
-    `${n}バック: 的中 ${hits}/${targets} ・ お手つき ${fa}\nベスト: ${bestOf('nback')}点`);
+    `${label}: 的中 ${hits}/${targets} ・ お手つき ${fa}\nベスト: ${bestOf('nback')}点`, aw);
 }
 
 /* ============================================================
@@ -523,7 +748,8 @@ ST_COLORS.forEach((col, idx) => {
 });
 let st = null;
 $('#st-start').addEventListener('click', () => {
-  st = { i: 0, total: 20, correct: 0, times: [], t0: 0, ink: -1, word: -1, busy: false, misses: [] };
+  const cfg = getSet('stroop');
+  st = { i: 0, total: cfg.trials, incong: cfg.incong, correct: 0, times: [], t0: 0, ink: -1, word: -1, busy: false, misses: [] };
   $('#st-feedback').textContent = '';
   $('#st-setup').style.display = 'none';
   $('#st-play').style.display = 'flex';
@@ -536,7 +762,7 @@ function stNext() {
   $('#st-hud').textContent = `${st.i + 1} / ${st.total}`;
   st.ink = rnd(0, 3);
   let word = st.ink;
-  if (Math.random() < 0.75) { do { word = rnd(0, 3); } while (word === st.ink); }
+  if (Math.random() < st.incong) { do { word = rnd(0, 3); } while (word === st.ink); }
   st.word = word;
   const el = $('#st-word');
   el.textContent = ST_COLORS[word].name;
@@ -570,11 +796,12 @@ function stEnd() {
   const speedBonus = times.length ? Math.max(0, Math.min(20, Math.round((1500 - avg) / 50))) : 0;
   const score = Math.round(80 * correct / total) + speedBonus;
   record('stroop', score);
+  const aw = awardSession('stroop', score, {});
   const missText = misses.length
     ? '\n― 誤答の内訳 ―\n' + misses.slice(0, 5).join('\n') + (misses.length > 5 ? `\n…他${misses.length - 5}件` : '')
     : '';
   showResult('stroop', `${score} 点`,
-    `正解 ${correct}/${total} ・ 平均反応 ${avg}ms\nベスト: ${bestOf('stroop')}点${missText}`);
+    `正解 ${correct}/${total} ・ 平均反応 ${avg}ms\nベスト: ${bestOf('stroop')}点${missText}`, aw);
 }
 
 /* ---------- keypad builder (calc / span 共用) ---------- */
@@ -597,12 +824,13 @@ let ca = null;
 buildKeypad('#ca-pad', k => {
   if (!ca) return;
   if (k === 'C') ca.input = '';
-  else if (k === 'OK') caSubmit();
+  else if (k === 'OK') { caSubmit(); return; }
   else if (ca.input.length < 4) ca.input += k;
-  $('#ca-ans').textContent = ca.input || ' ';
+  $('#ca-ans').textContent = ca.input || ' ';
 });
 $('#ca-start').addEventListener('click', () => {
-  ca = { i: 0, total: 20, correct: 0, input: '', q: null, t0: performance.now(), hudTimer: null };
+  const cfg = getSet('calc');
+  ca = { i: 0, total: cfg.count, level: cfg.level, correct: 0, input: '', q: null, t0: performance.now(), hudTimer: null };
   $('#ca-setup').style.display = 'none';
   $('#ca-play').style.display = 'flex';
   cancelGame = () => { if (ca) clearInterval(ca.hudTimer); ca = null; };
@@ -612,10 +840,20 @@ $('#ca-start').addEventListener('click', () => {
   caNext();
 });
 function caGen() {
-  const t = rnd(0, 2);
-  if (t === 0) { const a = rnd(2, 19), b = rnd(2, 19); return { q: `${a} + ${b}`, ans: a + b }; }
-  if (t === 1) { const a = rnd(5, 20), b = rnd(2, a - 1); return { q: `${a} − ${b}`, ans: a - b }; }
-  const a = rnd(2, 9), b = rnd(2, 9); return { q: `${a} × ${b}`, ans: a * b };
+  const t = rnd(0, 2), lv = ca.level;
+  if (t === 0) {
+    const [lo, hi] = lv === 0 ? [1, 9] : lv === 1 ? [2, 19] : [11, 49];
+    const a = rnd(lo, hi), b = rnd(lo, hi);
+    return { q: `${a} + ${b}`, ans: a + b };
+  }
+  if (t === 1) {
+    const a = lv === 0 ? rnd(2, 9) : lv === 1 ? rnd(5, 20) : rnd(25, 99);
+    const b = lv === 2 ? rnd(11, a - 10) : rnd(1, a - 1);
+    return { q: `${a} − ${b}`, ans: a - b };
+  }
+  const a = lv === 0 ? rnd(2, 5) : lv === 1 ? rnd(2, 9) : rnd(6, 12);
+  const b = lv === 0 ? rnd(2, 5) : lv === 1 ? rnd(2, 9) : rnd(3, 9);
+  return { q: `${a} × ${b}`, ans: a * b };
 }
 function caNext() {
   if (!ca) return;
@@ -623,7 +861,7 @@ function caNext() {
   ca.q = caGen();
   ca.input = '';
   $('#ca-q').textContent = ca.q.q;
-  $('#ca-ans').textContent = ' ';
+  $('#ca-ans').textContent = ' ';
 }
 function caSubmit() {
   if (!ca || ca.input === '') return;
@@ -638,31 +876,28 @@ function caEnd() {
   const { correct, total } = ca;
   clearInterval(ca.hudTimer);
   ca = null; cancelGame = null;
-  record('calc', Math.round(sec), `${correct}/${total}正解`);
+  const label = `${correct}/${total}正解`;
+  record('calc', Math.round(sec), label);
+  const aw = awardSession('calc', Math.round(sec), { correct, count: total });
   showResult('calc', `${sec.toFixed(1)} 秒`,
-    `正解 ${correct}/${total}\nベスト: ${bestOf('calc')}秒`);
+    `正解 ${correct}/${total}\nベスト: ${bestOf('calc')}秒`, aw);
 }
 
 /* ============================================================
    4) DIGIT SPAN
    ============================================================ */
-let spMode = 'fwd';
-$('#sp-mode').addEventListener('click', e => {
-  const b = e.target.closest('button'); if (!b) return;
-  spMode = b.dataset.mode;
-  $$('#sp-mode button').forEach(x => x.classList.toggle('on', x === b));
-});
 let sp = null;
 buildKeypad('#sp-pad', k => {
   if (!sp || sp.phase !== 'entry') return;
   if (k === 'C') sp.input = '';
-  else if (k === 'OK') spSubmit();
+  else if (k === 'OK') { spSubmit(); return; }
   else if (sp.input.length < sp.seq.length) sp.input += k;
-  $('#sp-ans').textContent = sp.input || ' ';
+  $('#sp-ans').textContent = sp.input || ' ';
 });
 $('#sp-start').addEventListener('click', () => {
+  const cfg = getSet('span');
   sp = {
-    mode: spMode, len: spMode === 'fwd' ? 3 : 2,
+    mode: cfg.mode, len: cfg.start, spd: cfg.speed,
     maxOk: 0, fails: 0, seq: [], input: '', phase: 'show', timers: [],
   };
   $('#sp-setup').style.display = 'none';
@@ -684,8 +919,8 @@ function spRound() {
   $('#sp-show').style.display = 'flex';
   const el = $('#sp-digit');
   sp.seq.forEach((d, i) => {
-    sp.timers.push(setTimeout(() => { el.textContent = d; el.style.opacity = 1; }, i * 900));
-    sp.timers.push(setTimeout(() => { el.style.opacity = 0; }, i * 900 + 650));
+    sp.timers.push(setTimeout(() => { el.textContent = d; el.style.opacity = 1; }, i * sp.spd));
+    sp.timers.push(setTimeout(() => { el.style.opacity = 0; }, i * sp.spd + sp.spd - 250));
   });
   sp.timers.push(setTimeout(() => {
     if (!sp) return;
@@ -695,8 +930,8 @@ function spRound() {
     $('#sp-prompt').innerHTML = sp.mode === 'fwd'
       ? '表示された<b>順</b>に入力'
       : '表示と<b>逆順</b>に入力';
-    $('#sp-ans').textContent = ' ';
-  }, sp.len * 900 + 200));
+    $('#sp-ans').textContent = ' ';
+  }, sp.len * sp.spd + 200));
 }
 function spSubmit() {
   if (!sp || sp.input.length !== sp.seq.length) return;
@@ -719,16 +954,193 @@ function spEnd() {
   sp = null; cancelGame = null;
   const label = mode === 'fwd' ? '順唱' : '逆唱';
   record('span', maxOk, label);
+  const aw = awardSession('span', maxOk, { label });
   showResult('span', `${maxOk} 桁`,
-    `${label}で ${maxOk} 桁まで成功\nベスト: ${bestOf('span')}桁`);
+    `${label}で ${maxOk} 桁まで成功\nベスト: ${bestOf('span')}桁`, aw);
 }
 
 /* ============================================================
-   RECORDS
+   5) FACES — 顔と名前・プロフィール記憶
+   ============================================================ */
+const FACE_SURNAMES = ['佐藤','鈴木','高橋','田中','伊藤','渡辺','山本','中村','小林','加藤','吉田','山田','松本','井上','木村','林','斎藤','清水','山口','森'];
+const FACE_GIVEN = {
+  m: ['太郎','健一','翔太','大輔','誠','拓也','直樹','浩二','亮','悠斗'],
+  f: ['花子','美咲','由美','彩','真理子','恵','さくら','陽子','千夏','舞'],
+};
+const FACE_JOBS = ['営業','設計士','教師','看護師','農家','パン職人','公務員','デザイナー','大工','薬剤師','漁師','編集者'];
+const FACE_HOBBIES = ['釣り','登山','将棋','カメラ','ランニング','園芸','読書','キャンプ','陶芸','サイクリング','天体観測','蕎麦打ち'];
+const SKIN = ['#f6cfa6', '#eebe8e', '#d9a06b'];
+const HAIRC = ['#26221f', '#4a332a', '#7a7a7a', '#20344f'];
+const SHIRT = ['#2f5d8f', '#3d4a5c', '#5c3d3d', '#3d5c46'];
+
+function randFace(g) {
+  const hairStyles = g === 'm' ? [0, 1, 2, 6] : [3, 4, 5, 1];
+  const f = {
+    skin: rnd(0, 2), hairc: rnd(0, 3), hair: pick(hairStyles),
+    eyes: rnd(0, 1), glasses: Math.random() < 0.3, mouth: rnd(0, 2), shirt: rnd(0, 3),
+  };
+  f.key = [f.skin, f.hairc, f.hair, f.glasses].join('-');
+  return f;
+}
+function faceSVG(f, size) {
+  const sk = SKIN[f.skin], hc = HAIRC[f.hairc];
+  const hairs = [
+    `<path d="M20 54 A30 30 0 0 1 80 54" stroke="${hc}" stroke-width="13" fill="none"/>`,                                                         // 0 短髪
+    `<path d="M20 54 A30 30 0 0 1 80 54" stroke="${hc}" stroke-width="16" fill="none"/><rect x="26" y="30" width="20" height="9" rx="4" fill="${hc}"/>`, // 1 前髪あり
+    `<path d="M22 50 A30 30 0 0 1 78 50" stroke="${hc}" stroke-width="8" fill="none"/>`,                                                          // 2 坊主ぎみ
+    `<path d="M20 54 A30 30 0 0 1 80 54" stroke="${hc}" stroke-width="15" fill="none"/><rect x="13" y="42" width="12" height="30" rx="6" fill="${hc}"/><rect x="75" y="42" width="12" height="30" rx="6" fill="${hc}"/>`, // 3 ボブ
+    `<path d="M20 54 A30 30 0 0 1 80 54" stroke="${hc}" stroke-width="15" fill="none"/><rect x="12" y="42" width="13" height="46" rx="6" fill="${hc}"/><rect x="75" y="42" width="13" height="46" rx="6" fill="${hc}"/>`, // 4 ロング
+    `<path d="M20 54 A30 30 0 0 1 80 54" stroke="${hc}" stroke-width="13" fill="none"/><circle cx="50" cy="15" r="9" fill="${hc}"/>`,             // 5 おだんご
+    '',                                                                                                                                            // 6 スキンヘッド
+  ];
+  const eyes = f.eyes === 0
+    ? `<circle cx="39" cy="53" r="2.8" fill="#222"/><circle cx="61" cy="53" r="2.8" fill="#222"/>`
+    : `<rect x="34.5" y="51.5" width="9" height="3" rx="1.5" fill="#222"/><rect x="56.5" y="51.5" width="9" height="3" rx="1.5" fill="#222"/>`;
+  const glasses = f.glasses
+    ? `<circle cx="39" cy="53" r="8.5" fill="none" stroke="#20242c" stroke-width="2"/><circle cx="61" cy="53" r="8.5" fill="none" stroke="#20242c" stroke-width="2"/><line x1="47.5" y1="53" x2="52.5" y2="53" stroke="#20242c" stroke-width="2"/>`
+    : '';
+  const mouths = [
+    `<path d="M42 68 Q50 74 58 68" stroke="#a3542f" stroke-width="2.5" fill="none" stroke-linecap="round"/>`,
+    `<line x1="43" y1="69" x2="57" y2="69" stroke="#a3542f" stroke-width="2.5" stroke-linecap="round"/>`,
+    `<ellipse cx="50" cy="69" rx="5" ry="3.5" fill="#8f3f22"/>`,
+  ];
+  return `<svg width="${size}" height="${size}" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <path d="M18 100 Q50 78 82 100 Z" fill="${SHIRT[f.shirt]}"/>
+    <circle cx="20" cy="56" r="5" fill="${sk}"/><circle cx="80" cy="56" r="5" fill="${sk}"/>
+    <circle cx="50" cy="54" r="30" fill="${sk}"/>
+    ${hairs[f.hair]}
+    <rect x="33" y="43" width="11" height="2.6" rx="1.3" fill="${hc}"/><rect x="56" y="43" width="11" height="2.6" rx="1.3" fill="${hc}"/>
+    ${eyes}${glasses}${mouths[f.mouth]}
+  </svg>`;
+}
+function genPeople(n) {
+  const surs = shuffle([...FACE_SURNAMES]).slice(0, n);
+  const jobs = shuffle([...FACE_JOBS]).slice(0, n);
+  const hobbies = shuffle([...FACE_HOBBIES]).slice(0, n);
+  const used = new Set();
+  return surs.map((sur, i) => {
+    const g = Math.random() < 0.5 ? 'm' : 'f';
+    let face;
+    do { face = randFace(g); } while (used.has(face.key));
+    used.add(face.key);
+    return { sur, given: pick(FACE_GIVEN[g]), job: jobs[i], hobby: hobbies[i], face };
+  });
+}
+const fullName = p => `${p.sur} ${p.given}`;
+function nameChoices(p, people) {
+  const set = new Set([fullName(p)]);
+  // 他の登場人物の名前を優先的に混ぜる（顔と名前の取り違えを検出する良問になる）
+  shuffle(people.filter(x => x !== p)).forEach(x => { if (set.size < 4) set.add(fullName(x)); });
+  while (set.size < 4) set.add(pick(FACE_SURNAMES) + ' ' + pick(Math.random() < 0.5 ? FACE_GIVEN.m : FACE_GIVEN.f));
+  return shuffle([...set]);
+}
+function fieldChoices(p, field, people) {
+  const pool = field === 'job' ? FACE_JOBS : FACE_HOBBIES;
+  const set = new Set([p[field]]);
+  shuffle(people.filter(x => x !== p)).forEach(x => { if (set.size < 4) set.add(x[field]); });
+  while (set.size < 4) set.add(pick(pool));
+  return shuffle([...set]);
+}
+function buildQuiz(people, deep) {
+  const qs = shuffle([...people]).map(p => ({ type: 'name', p, choices: nameChoices(p, people) }));
+  if (deep) {
+    shuffle([...people]).forEach(p => {
+      const t = Math.random() < 0.5 ? 'job' : 'hobby';
+      qs.push({ type: t, p, choices: fieldChoices(p, t, people) });
+    });
+  }
+  return qs;
+}
+let fc = null;
+$('#fc-start').addEventListener('click', () => {
+  const cfg = getSet('faces');
+  const people = genPeople(cfg.people);
+  fc = { people, deep: cfg.deep, phase: 'memo', idx: 0, quiz: buildQuiz(people, cfg.deep), qi: 0, correct: 0, busy: false, t0: 0, timers: [] };
+  $('#fc-setup').style.display = 'none';
+  $('#fc-memo').style.display = 'flex';
+  cancelGame = () => { fc && fc.timers.forEach(clearTimeout); fc = null; };
+  fcShowMemo();
+});
+function fcShowMemo() {
+  const p = fc.people[fc.idx];
+  $('#fc-hud').textContent = `記憶 ${fc.idx + 1} / ${fc.people.length}`;
+  $('#fc-card').innerHTML =
+    faceSVG(p.face, 130) +
+    `<div class="fc-name">${fullName(p)}</div>` +
+    (fc.deep ? `<div class="fc-prof">仕事: ${p.job} ／ 趣味: ${p.hobby}</div>` : '');
+  $('#fc-next').textContent = fc.idx === fc.people.length - 1 ? 'テスト開始' : `覚えた（次へ）`;
+}
+$('#fc-next').addEventListener('click', () => {
+  if (!fc || fc.phase !== 'memo') return;
+  fc.idx++;
+  if (fc.idx >= fc.people.length) {
+    fc.phase = 'quiz';
+    $('#fc-memo').style.display = 'none';
+    $('#fc-quiz').style.display = 'flex';
+    fcShowQ();
+  } else fcShowMemo();
+});
+function fcShowQ() {
+  if (!fc) return;
+  if (fc.qi >= fc.quiz.length) { fcEnd(); return; }
+  const q = fc.quiz[fc.qi];
+  $('#fc-hud').textContent = `テスト ${fc.qi + 1} / ${fc.quiz.length}`;
+  $('#fc-face').innerHTML = faceSVG(q.p.face, 110);
+  $('#fc-q').textContent = q.type === 'name' ? 'この人の名前は？' : q.type === 'job' ? 'この人の仕事は？' : 'この人の趣味は？';
+  $('#fc-fb').textContent = '';
+  const box = $('#fc-choices');
+  box.innerHTML = '';
+  q.choices.forEach(c => {
+    const b = document.createElement('button');
+    b.className = 'choice-btn';
+    b.textContent = c;
+    box.appendChild(b);
+  });
+  fc.busy = false;
+  fc.t0 = performance.now();
+}
+$('#fc-choices').addEventListener('click', e => {
+  const b = e.target.closest('.choice-btn');
+  if (!b || !fc || fc.phase !== 'quiz' || fc.busy) return;
+  if (performance.now() - fc.t0 < 250) return; // 遅延タップ対策
+  fc.busy = true;
+  const q = fc.quiz[fc.qi];
+  const ans = q.type === 'name' ? fullName(q.p) : q.p[q.type];
+  const ok = b.textContent === ans;
+  fc.qi++;
+  fc.timers.push(setTimeout(fcShowQ, ok ? 400 : 1300)); // 誤答時は正解を見せてから進む
+  if (ok) fc.correct++;
+  else $('#fc-fb').textContent = `正解: ${ans}`;
+  flashStage('#fc-stage', ok);
+});
+function fcEnd() {
+  const { correct, quiz, people, deep } = fc;
+  fc.timers.forEach(clearTimeout);
+  fc = null; cancelGame = null;
+  const score = Math.round(100 * correct / quiz.length);
+  const label = `${people.length}人${deep ? '+プロフ' : ''}`;
+  record('faces', score, label);
+  const aw = awardSession('faces', score, { people: people.length });
+  showResult('faces', `${score} 点`,
+    `${label}: 正解 ${correct}/${quiz.length}\nベスト: ${bestOf('faces')}点`, aw);
+}
+
+/* ============================================================
+   RECORDS + BADGES
    ============================================================ */
 function renderRecords() {
   const wrap = $('#rec-list');
   wrap.innerHTML = '';
+  // 実績
+  const earned = (store.load().gami || {}).badges || {};
+  const bBlock = document.createElement('div');
+  bBlock.className = 'rec-block';
+  bBlock.innerHTML = `<div class="rec-title">🏅 実績 <small>${Object.keys(earned).length} / ${BADGES.length}</small></div>` +
+    '<div class="badge-grid">' + BADGES.map(b =>
+      `<div class="badge${earned[b.id] ? '' : ' off'}"><b>${earned[b.id] ? '🏅' : '🔒'} ${b.name}</b><small>${b.desc}${earned[b.id] ? `<br>${earned[b.id]}` : ''}</small></div>`
+    ).join('') + '</div>';
+  wrap.appendChild(bBlock);
+  // 種目別記録
   for (const [g, meta] of Object.entries(GAMES)) {
     const h = historyOf(g).slice(-10);
     const block = document.createElement('div');
@@ -751,7 +1163,7 @@ function renderRecords() {
 }
 
 /* ---------- init ---------- */
-$('#version-label').textContent = 'Brain Gym v3';
+$('#version-label').textContent = 'Brain Gym v4';
 renderHome();
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   navigator.serviceWorker.register('sw.js').catch(() => {});
